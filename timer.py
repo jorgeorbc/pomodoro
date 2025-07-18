@@ -3,9 +3,14 @@ import notify2
 import time
 import sys
 import select
+import os
+
+EXE_DIR = os.path.dirname(sys.executable)
+FILE_PATH = os.path.join(EXE_DIR, "info.txt")
 
 class Pomodoro:
-    def __init__(self, duration=25):
+    def __init__(self, duration=25, category='default'):
+        self.category = category
         self.duration_minutes = duration
         self.duration = duration * 60
         self.remaining = duration * 60
@@ -37,19 +42,22 @@ class Pomodoro:
 
             notify2.init('Pomodoro')
             n = notify2.Notification(
-                "Pomodoro terminado",
-                f"Has completado {self.duration_minutes} minutos de trabajo."
+                "Pomodoro finished",
+                f"You have completed {self.duration_minutes} minutes of work."
             )
             n.show()
-            print("\n🎉 ¡Felicidades, has terminado tu Pomodoro!")
+            file = open(FILE_PATH, "a")
+            file.write(f"{self.category}, {self.duration_minutes}\n")
+            file.close
+            print("\n🎉 Congratulations, You have finished your Pomodoro!")
 
     def toggle_pause(self):
         self.pause = not self.pause
-        print("\n[Pausa activada]" if self.pause else "\n[Reanudado]")
+        print("\n[Pause activated]" if self.pause else "\n[Resumed]")
 
     def set_quit(self):
         self.quit = True
-        print("\n[Saliendo del Pomodoro...]")
+        print("\n[Leaving the Pomodoro...]")
 
 def user_input_loop(pomodoro):
     while not pomodoro.quit:
@@ -64,18 +72,26 @@ def user_input_loop(pomodoro):
 def enter_time():
     try:
         prompt = (
-            "Ingresa el tiempo en minutos "
-            "(por defecto 25): "
+            "Enter time in minutes"
+            "(default: 25 minutes): "
         )
         t = int(input(prompt) or "25")
         return t if t > 0 else 25
     except ValueError:
-        print("Tiempo inválido. Usando 25 minutos por defecto.")
+        print("Invalid time. Using 25 minutes (default).")
         return 25
+
+def enter_category():
+    try:
+        category = input("Enter category (default: 'default'): ")
+        return category
+    except:
+        return "default"
 
 if __name__ == "__main__":
     duration = enter_time()
-    pomo = Pomodoro(duration)
+    category = enter_category()
+    pomo = Pomodoro(duration, category)
     input_thread = threading.Thread(target=user_input_loop,
                                     args=(pomo,),
                                     daemon=True)
